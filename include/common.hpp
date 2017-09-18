@@ -1,6 +1,10 @@
+#ifndef COMMON_HPP
+#define COMMON_HPP
+
 #include<iostream>
 #include<string>
 #include<thread>
+#include<sstream>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -22,7 +26,7 @@ enum command {
    invalid,
    search,
    share,
-   get,
+   get2,
    del,
    exec
 };
@@ -30,7 +34,7 @@ enum command {
 command hashit (std::string const& inString) {
     if (inString == "search") return search;
     if (inString == "share") return share;
-    if (inString == "get") return get;
+    if (inString == "get") return get2;
     if (inString == "del") return del;
     if (inString == "exec") return exec;
     return invalid;
@@ -41,5 +45,6 @@ vector<string> words;
 int Mysockinit(int sockfd,string port,string server);
 int threadsupply(int sockfd,void *(*connection_handler) (int*));
 void *get_in_addr(struct sockaddr *sa);
-int connecttoserver(int sockfd,char* client,char* port);
+int connecttoserver(int sockfd,string client,string port);
 string messageprocessing(string inp);
+void *connection_handler(int* sock);

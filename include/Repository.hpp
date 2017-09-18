@@ -4,7 +4,8 @@
 #include <map>
 #include <vector>
 #include <fstream>
-
+#include <memory>
+#include <mutex>
 
 namespace RepositoryNS {
 
@@ -19,6 +20,7 @@ namespace RepositoryNS {
 
     public:
         File (const std::string &sFileName_in, const std::string &sRelativePath_in, const std::string &sAliasName_in);
+        bool Compare(const File &aFile);
     };
 
     inline std::ostream& operator<< (std::ostream &outputStream, const File& fFile) {
@@ -39,13 +41,19 @@ namespace RepositoryNS {
 
     class Repository {
     private:
-        static std::map<std::string, std::vector<File> > m_MapOfFiles;
-        std::vector<File> m_SearchResults;
+        static std::unique_ptr<std::map<std::string, std::vector<File> > > m_MapOfFiles;
+        static std::mutex m_FileMapMutex;
+        std::unique_ptr<std::vector<File> > m_SearchResults;
+        std::string m_ClientAlias; //later can create a factory for this class to allow registered users access
 
     public:
-        Repository ();
+        Repository (std::string &sClientAlias_in);
+        Repository();
+        ~Repository(); //Write logic to write to file
         static bool InitRepository(const std::string &sRepoFilePath_in);
-        std::vector<File>& Search(std::string sFileName_in);
+        std::unique_ptr<std::vector<File> > Search(std::string sFileName_in);
+        bool Share(std::string &sRelativePath_in);
+        bool Deregister(std::string &sRelativePath_in);
     };
 
 } /* Repository */
