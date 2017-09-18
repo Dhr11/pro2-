@@ -17,7 +17,7 @@
 // waitpid() might overwrite errno, so we save and restore it:
 #include <sys/wait.h>
 #include <signal.h>
-#include<pthread.h>
+
 
 using namespace std;
 #define BACKLOG 10	 // how many pending connections queue will hold
@@ -42,9 +42,11 @@ command hashit (std::string const& inString) {
 
 vector<string> words;
 
+
 int Mysockinit(int sockfd,string port,string server);
 int threadsupply(int sockfd,void *(*connection_handler) (int*));
 void *get_in_addr(struct sockaddr *sa);
 int connecttoserver(int sockfd,string client,string port);
 string messageprocessing(string inp);
 void *connection_handler(int* sock);
+#endif
