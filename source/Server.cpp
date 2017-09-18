@@ -4,41 +4,6 @@
 #include "common.hpp"
 //using namespace std;
 
-void *connection_handler(int* sock)
-{
-
-    int read_size;
-    char *message , client_message[2000];
-    string reply;
-
-    //Send some messages to the client
-    message = "Greetings! I am your server\n";
-    write(*sock , message , strlen(message));
-
-    //Receive a message from client
-    while( (read_size = recv(*sock , client_message , 2000 , 0)) > 0 )
-    {
-        //Send the message back to client
-				printf("received: %s\n",client_message);
-        int check(0);
-        reply=messageprocessing();
-        write(sock , reply , reply.length());
-        //memset(client_message,' ',sizeof(client_message));
-		}
-
-    if(read_size == 0)
-    {
-        //printf("Client disconnected");
-        fflush(stdout);
-    }
-    else if(read_size == -1)
-    {
-        perror("recv failed");
-    }
-		close(sock);
-    free(sock);			//Free the socket pointer
-    return 0;
-}
 
 
 int main(int argc, char const *argv[]) {

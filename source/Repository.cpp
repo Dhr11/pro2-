@@ -7,12 +7,17 @@
 #endif
 #include "Repository.hpp"
 
-std::map<std::string, std::vector<RepositoryNS::File> > RepositoryNS::Repository::m_MapOfFiles;
+std::unique_ptr<std::map<std::string, std::vector<RepositoryNS::File> > > RepositoryNS::Repository::m_MapOfFiles = nullptr;
+std::mutex RepositoryNS::Repository::m_FileMapMutex;
 
 RepositoryNS::File::File(const std::string &sFileName_in, const std::string &sRelativePath_in, const std::string &sAliasName_in) {
     m_FileName = sFileName_in;
     m_RelativePath = sRelativePath_in;
     m_AliasName = sAliasName_in;
+}
+
+inline bool RepositoryNS::File::Compare(const File &aFile) {
+    return (aFile.m_AliasName == m_AliasName && aFile.m_FileName == m_FileName && aFile.m_RelativePath == m_RelativePath);
 }
 
 inline RepositoryNS::FileParser::FileParser(const std::string &sRepoFilePath_in) {
@@ -58,15 +63,18 @@ bool RepositoryNS::FileParser::Parse(std::map<std::string, std::vector<File> > &
     return true;
 }
 
+RepositoryNS::Repository::Repository(std::string &sClientAlias_in) : m_ClientAlias(sClientAlias_in) {
+
+}
 RepositoryNS::Repository::Repository() {
 
 }
-
 /**
     Read the repository file from the specified path
 */
 bool RepositoryNS::Repository::InitRepository(const std::string &sRepoFilePath_in) {
     try {
+        m_MapOfFiles = std::make_unique<std::map<std::string, std::vector<RepositoryNS::File> > >();
         char buffer[1024];
         uint32_t size = sizeof(buffer);
         if (GetExecutableDirectory(buffer, &size) != 0)
@@ -76,7 +84,7 @@ bool RepositoryNS::Repository::InitRepository(const std::string &sRepoFilePath_i
         pwd = pwd.substr(0, iPos + 1);
         pwd = pwd + sRepoFilePath_in;
         FileParser aFileParser(pwd);
-        if(!aFileParser.Parse(m_MapOfFiles))
+        if(!aFileParser.Parse(*m_MapOfFiles))
             return false;
     }
     catch(std::exception) {
@@ -88,16 +96,62 @@ bool RepositoryNS::Repository::InitRepository(const std::string &sRepoFilePath_i
 /**
     Search the repository for specified file
 */
-std::vector<RepositoryNS::File>& RepositoryNS::Repository::Search(std::string sFileName_in) {
-    std::vector<File>::iterator itrSearchResults = m_SearchResults.begin();
+std::unique_ptr<std::vector<RepositoryNS::File> > RepositoryNS::Repository::Search(std::string sFileName_in) {
+    m_SearchResults = std::make_unique<std::vector<RepositoryNS::File> >();
+    std::vector<File>::iterator itrSearchResults = m_SearchResults->begin();
 
-    for (auto itr : m_MapOfFiles) {
+    for (auto itr : *m_MapOfFiles) {
         const std::string &sKey = itr.first;
         if (sKey.size() >= sFileName_in.size() && sKey.compare(0, sFileName_in.size(), sFileName_in) == 0) {
-            m_SearchResults.insert(itrSearchResults, itr.second.begin(), itr.second.end());
-            itrSearchResults = m_SearchResults.end();
+            m_SearchResults->insert(itrSearchResults, itr.second.begin(), itr.second.end());
+            itrSearchResults = m_SearchResults->end();
         }
     }
 
-    return m_SearchResults;
+    return std::move(m_SearchResults);
+}
+
+bool RepositoryNS::Repository::Share(std::string &sRelativePath_in) {
+    std::string sFileName;
+
+    int iPos = sRelativePath_in.rfind("/");
+    sFileName = sRelativePath_in.substr(iPos + 1);
+
+    //modify to make sure that if the file has already been shared from the same location, prevent addition to repository
+    std::map<std::string, std::vector<File> >::iterator mapitr;
+    if ((mapitr = m_MapOfFiles->find(sFileName)) != m_MapOfFiles->end()) {
+        std::lock_guard<std::mutex> lock(m_FileMapMutex);
+        mapitr->second.emplace_back(sFileName, sRelativePath_in, m_ClientAlias);
+        return true;
+    }
+
+    std::lock_guard<std::mutex> lock(m_FileMapMutex);
+    std::pair<std::map<std::string, std::vector<File> >::iterator, bool> pInsertionResult;
+    pInsertionResult = m_MapOfFiles->emplace(std::pair<std::string, std::vector<File> > (sFileName, {{sFileName, sRelativePath_in, m_ClientAlias}}));
+
+    return pInsertionResult.second;
+}
+
+//future modification: should return enum to indicate failure, success or does not exist
+bool RepositoryNS::Repository::Deregister(std::string &sRelativePath_in) {
+    std::string sFileName;
+
+    int iPos = sRelativePath_in.rfind("/");
+    sFileName = sRelativePath_in.substr(iPos + 1);
+
+    std::map<std::string, std::vector<File> >::iterator mapitr;
+    if ((mapitr = m_MapOfFiles->find(sFileName)) != m_MapOfFiles->end()) {
+        std::vector<File>::iterator vectoritr;
+        for(vectoritr = mapitr->second.begin(); vectoritr != mapitr->second.end(); ++vectoritr) {
+            if(vectoritr->Compare({sFileName, sRelativePath_in, m_ClientAlias})) {
+                std::lock_guard<std::mutex> lock(m_FileMapMutex);
+                mapitr->second.erase(vectoritr);
+                //return true from here if Share function is fixed
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }

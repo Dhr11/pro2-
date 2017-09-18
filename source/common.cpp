@@ -1,5 +1,5 @@
 #include"common.hpp"
-
+#include"Repository.hpp"
 
 
 void *get_in_addr(struct sockaddr *sa)
@@ -10,6 +10,48 @@ void *get_in_addr(struct sockaddr *sa)
   return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+void *connection_handler(int* sock)
+{
+
+    int read_size;
+    char *message , client_message[2000];
+    string reply;
+
+    //Send some messages to the client
+    message = "Greetings! I am your server\n";
+    write(*sock , message , strlen(message));
+    stringstream tmp;
+    //Receive a message from client
+    while( (read_size = recv(*sock , client_message , 2000 , 0)) > 0 )
+    {
+        //Send the message back to client
+				printf("received: %s\n",client_message);
+        int check(0);
+        tmp<<client_message;
+        //memset(client_message,' ',sizeof(client_message));
+		}
+
+    reply=messageprocessing(tmp.str());
+    tmp.str("");
+    int num=0;
+    while(num<=reply.length())
+      {
+        int i=write(*sock , reply.c_str() , reply.length());
+        num=num+i;
+      }
+    if(read_size == 0)
+    {
+        //printf("Client disconnected");
+        fflush(stdout);
+    }
+    else if(read_size == -1)
+    {
+        perror("recv failed");
+    }
+		close(*sock);
+    free(sock);			//Free the socket pointer
+    return 0;
+}
 
 int Mysockinit(int sockfd,string port,string server)
 {
@@ -21,7 +63,7 @@ int Mysockinit(int sockfd,string port,string server)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(server, port, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(server.c_str(), port.c_str(), &hints, &servinfo)) != 0) {
     cerr<<"getaddrinfo: "<<gai_strerror(rv)<<endl;
 		return -1;
 	}
@@ -69,17 +111,18 @@ while(1) {  // main accept() loop
   sin_size = sizeof their_addr;
   while((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)))
   {
-    //pthread_t sniffer_thread;
-    thread clientthread;
+  
+
     new_sock = new int;
     *new_sock = new_fd;
-    if( clientthread(connection_handler,new_fd)) < 0)          //doubt return value
-     {
-         perror("could not create thread");
-         return 1;
-     }
+    //if(
+       thread clientthread(connection_handler,new_sock);//) < 0)          //doubt return value
+     //{
+    //     perror("could not create thread");
+    //     return 1;
+     //}
       //pthread_join( sniffer_thread , NULL);
-      cout<<"Handler assigned");
+      cout<<"Handler assigned";
   }
   if (new_fd == -1) {
     perror("accept");
@@ -99,7 +142,7 @@ int connecttoserver(int sockfd,string client,string port)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(client, port, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(client.c_str(), port.c_str(), &hints, &servinfo)) != 0) {
 		cerr<<"getaddrinfo: "<<gai_strerror(rv)<<endl;
 		return 1;
 	}
@@ -137,7 +180,8 @@ int connecttoserver(int sockfd,string client,string port)
 string messageprocessing(string inp)
 {
   string word;
-  istringstream rawCommand(inp);
+  istringstream rawCommand;
+  rawCommand.str(inp);
 
   int Qcount(0);
   stringstream ss;
@@ -170,6 +214,9 @@ string messageprocessing(string inp)
  }
     string reply;
     stringstream ss2;
+
+    RepositoryNS::Repository repo;
+    std::unique_ptr<std::vector<RepositoryNS::File> > Results;
     switch (hashit(words.at(0))) {
     case invalid:
         reply="FAILURE:INVALID ARGUMENTS\n";
@@ -177,11 +224,12 @@ string messageprocessing(string inp)
     case search:
         cout<<"search command"<<endl;
         if(words.size()!=2)
-          return 1;
-        m_SearchResults=Search(words[1]);
-        for(int i=0;i<m_SearchResults.size();i++)
+          return "FAILURE:INVALID ARGUMENTS\n";
+
+        Results=repo.Search(words[1]);
+        for(int i=0;i<(*Results).size();i++)
         {
-          ss<<m_SearchResults[i];
+          ss<<(*Results)[i];
           ss<<'\n';
         }
         reply=ss.str();
@@ -192,7 +240,7 @@ string messageprocessing(string inp)
             return "FAILURE:INVALID ARGUMENTS\n";
         reply="share command\n";
         return reply;
-    case get:
+    case get2:
         cout<<"get command";
         if(words.size()!=3 && words.size()!=4)
             return "FAILURE:INVALID ARGUMENTS\n";

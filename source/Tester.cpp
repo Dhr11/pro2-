@@ -9,10 +9,10 @@ int main() {
     }
 
     RepositoryNS::Repository aRepository;
-    std::vector<RepositoryNS::File> &searchResult = aRepository.Search("billy.txt");
+    std::unique_ptr<std::vector<RepositoryNS::File> > searchResult = aRepository.Search("billy.txt");
 
-    for (size_t i = 0; i < searchResult.size(); i++) {
-        std::cout << searchResult[i];
+    for (size_t i = 0; i < (*searchResult).size(); i++) {
+        std::cout << (*searchResult)[i];
     }
 
     return 0;

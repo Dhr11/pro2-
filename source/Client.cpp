@@ -1,10 +1,18 @@
 /*
-** client.c -- a stream socket client demo
+** Client.cpp
 */
 
 #include "common.hpp"
 #define MAXDATASIZE 2000 // max number of bytes we can get at once
 
+
+std::string ClientAlias;
+std::string ClientIP;
+std::string ClientPort;
+std::string ServerIP;
+std::string ServerPort;
+std::string DownloadPort;
+std::string ClientRoot;
 // get sockaddr, IPv4 or IPv6:
 //char* DPORT_OWN,*DPORT_SRC,*SERVER_PORT;
 //char* client;
@@ -44,6 +52,7 @@
 //return 0;
 //}
 
+
 int main(int argc, char *argv[])
 {
 
@@ -55,13 +64,13 @@ int main(int argc, char *argv[])
 	    cerr<<"usage: client hostname\n";
 	    exit(1);
 	}
-  m_ClientAlias=argv[1];
-  m_ClientIP=argv[2];
-  m_ClientPort=argv[3];
-  m_ServerIP=argv[4];
-  m_ServerPort=argv[5];
-  m_DownloadPort=argv[6];
-  m_ClientRoot=argv[7];
+  ClientAlias=argv[1];
+  ClientIP=argv[2];
+  ClientPort=argv[3];
+  ServerIP=argv[4];
+  ServerPort=argv[5];
+  DownloadPort=argv[6];
+  ClientRoot=argv[7];
 
 	//DPORT_OWN=argv[2];
 	//SERVER_PORT=argv[3];
@@ -82,7 +91,7 @@ int main(int argc, char *argv[])
 		//pthread_join( sniffer_thread , NULL);
 	//	printf("Handler assigned");
 
-	sockfd=connecttoserver(sockfd,m_ClientIP,m_ServerPort);
+	sockfd=connecttoserver(sockfd,ClientIP,ServerPort);
 
 
 	//char message[MAXDATASIZE];//,sreply[MAXDATASIZE];
@@ -92,7 +101,7 @@ int main(int argc, char *argv[])
 	cout<<"Enter message ";
 	//fgets(message,MAXDATASIZE,stdin);
   getline(std::cin,message);
-  if ((numbytes = send(sockfd, message, MAXDATASIZE, 0)) == -1) {
+  if ((numbytes = send(sockfd, message.c_str(), MAXDATASIZE, 0)) == -1) {
 			perror("send failed");
 			exit(1);
 	}
