@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Wextra -std=c++11
+CFLAGS = -Wall -Wextra -pthread -lpthread -std=c++11
 SOFLAGS = -dynamiclib -install_name @rpath/.
 DEBUG = -g
 RELEASE = -O3
@@ -18,7 +18,7 @@ all: libRepository.dylib libRepositoryd.dylib libCentralServer.dylib libCentralS
 libRepository.dylib: Repository.o
 	$(CC) $(SOFLAGS)/$@ $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
 
-Repository.o: Repository.cpp Repository.hpp Common.hpp
+Repository.o: Repository.cpp Repository.hpp
 	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/Repository.cpp -o $(RELEASEDIR)/$@
 
 libRepositoryd.dylib: Repositoryd.o
@@ -39,17 +39,26 @@ Testerd: Testerd.o
 Testerd.o: Tester.cpp Repository.hpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) -c $(SOURCEPATH)/Tester.cpp -o $(DEBUGDIR)/$@
 
+common.o: common.cpp common.hpp
+	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/common.cpp -o $(RELEASEDIR)/$@
+
 Server: Server.o
 	$(CC) $(RELEASELINK) -rpath '$(PWD)/$(RELEASEDIR)' -lCentralServer $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
 
 Serverd: Serverd.o
 	$(CC) $(DEBUGLINK) -rpath '$(PWD)/$(DEBUGDIR)' -lCentralServerd $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
 
-Server.o: Server.cpp CentralServer.hpp
+Server.o: Server.cpp CentralServer.hpp common.hpp
 	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/Server.cpp -o $(RELEASEDIR)/$@
 
-Serverd.o: Server.cpp CentralServer.hpp
+Serverd.o: Server.cpp CentralServer.hpp common.hpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) -c $(SOURCEPATH)/Server.cpp -o $(DEBUGDIR)/$@
+
+Client: Client.o
+	$(CC) $(RELEASELINK) -rpath '$(PWD)/$(RELEASEDIR)' -lCentralServer $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
+
+Client.o: Client.cpp common.hpp
+	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/Client.cpp -o $(RELEASEDIR)/$@
 
 libCentralServer.dylib: CentralServer.o
 	$(CC) $(SOFLAGS)/$@ $(RELEASELINK) -lRepository $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
