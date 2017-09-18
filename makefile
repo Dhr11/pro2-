@@ -28,22 +28,22 @@ Repositoryd.o: Repository.cpp Repository.hpp common.hpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) -c $(SOURCEPATH)/Repository.cpp -o $(DEBUGDIR)/$@
 
 Tester: Tester.o
-	$(CC) $(RELEASELINK) -Wl,rpath,'whatever' '$(PWD)/$(RELEASEDIR)' -lRepository $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
+	$(CC) $(RELEASELINK) -Wl,rpath,'$(PWD)/$(RELEASEDIR)' -lRepository $(RELEASEDIR)/$? -o $(RELEASEDIR)/$@
 
 Tester.o: Tester.cpp Repository.hpp
 	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/Tester.cpp -o $(RELEASEDIR)/$@
 
 Testerd: Testerd.o
-	$(CC) $(DEBUGLINK) -Wl,rpath,'whatever' '$(PWD)/$(DEBUGDIR)' -lRepositoryd $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
+	$(CC) $(DEBUGLINK) -Wl,rpath,'$(PWD)/$(DEBUGDIR)' -lRepositoryd $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
 
 Testerd.o: Tester.cpp Repository.hpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) -c $(SOURCEPATH)/Tester.cpp -o $(DEBUGDIR)/$@
 
 Server: Server.o common.o
-	$(CC) $(RELEASELINK) -Wl,rpath,'whatever' '$(PWD)/$(RELEASEDIR)' -lCentralServer $(RELEASEDIR)/Server.o $(RELEASEDIR)/common.o -o $(RELEASEDIR)/$@
+	$(CC) $(RELEASELINK) -Wl,rpath,'$(PWD)/$(RELEASEDIR)' -lCentralServer $(RELEASEDIR)/Server.o $(RELEASEDIR)/common.o -o $(RELEASEDIR)/$@
 
 Serverd: Serverd.o commond.o
-	$(CC) $(DEBUGLINK) -Wl,rpath,'whatever' '$(PWD)/$(DEBUGDIR)' -lCentralServerd $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
+	$(CC) $(DEBUGLINK) -Wl,rpath,'$(PWD)/$(DEBUGDIR)' -lCentralServerd $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
 
 Server.o: Server.cpp CentralServer.hpp
 	$(CC) $(CFLAGS) $(INC) $(RELEASE) -c $(SOURCEPATH)/Server.cpp -o $(RELEASEDIR)/$@
@@ -70,7 +70,7 @@ commond.o: common.cpp common.hpp Repository.hpp
 	$(CC) $(CFLAGS) $(INC) $(DEBUG) -c $(SOURCEPATH)/common.cpp -o $(DEBUGDIR)/$@
 
 Client: Client.o common.o
-	$(CC) $(RELEASELINK) -Wl,rpath,'whatever' '$(PWD)/$(RELEASEDIR)' -lRepository $(RELEASEDIR)/Client.o $(RELEASEDIR)/common.o -o $(RELEASEDIR)/$@
+	$(CC) $(RELEASELINK) -Wl,rpath,'$(PWD)/$(RELEASEDIR)' -lRepository $(RELEASEDIR)/Client.o $(RELEASEDIR)/common.o -o $(RELEASEDIR)/$@
 
 Clientd: Clientd.o commond.o
 	$(CC) $(DEBUGLINK) $(DEBUGDIR)/$? -o $(DEBUGDIR)/$@
