@@ -1,5 +1,5 @@
 /*
-** Client.cpp
+** client.c -- a stream socket client demo
 */
 
 #include "common.hpp"
